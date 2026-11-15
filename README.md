@@ -1,32 +1,20 @@
 # Tennis Intelligence Engine (TIE)
 
-Application de suivi et d'analyse tennis : interface HTML, backend Next.js, moteur ML Python facultatif et persistance Supabase.
+L'interface utilisateur est servie en HTML statique depuis `public/tie.html` et `public/dashboard.html`.
 
-## Structure
-- `apps/web/` : application Next.js 15, interface (`public/tie.html`, `public/dashboard.html`) et API.
-- `services/ml/` : service FastAPI facultatif.
-- `supabase/migrations/` : schéma SQL de TIE.
-- `netlify.toml` : configuration de build Netlify.
-- `docs/` : état, validation et configuration.
+Le serveur Next.js reste indispensable : il expose les API `/api/analyze`, `/api/health`, `/api/performance` et `/api/predictions`, protège les secrets et relie l'interface à BetPawa, au moteur ML et à Supabase.
 
-## Développement local
-```bash
-cd apps/web
-npm install
-npm run dev
-```
+## Configuration
+- Node.js 20+
+- `cd apps/web && npm install`
+- Copier `.env.example` vers `.env.local`.
+- L'URL et la clé publique du projet TIE sont déjà indiquées.
+- Ajouter `SUPABASE_SERVICE_ROLE_KEY` uniquement dans l'environnement serveur de l'hébergeur. Ne jamais placer cette clé dans le HTML ou dans une variable `NEXT_PUBLIC_*`.
+- La table `public.app_predictions` a déjà été créée dans le projet Supabase TIE. Voir `../../docs/SUPABASE-CONFIG.md`.
+- Démarrer avec `npm run dev`, puis ouvrir `http://localhost:3000`.
+- Vérifier `/api/health` : `storage` doit indiquer `supabase` et `supabaseConfigured` doit être `true` une fois la clé serveur configurée.
 
-## Déploiement Netlify
-Netlify doit construire l'application Next.js depuis `apps/web` avec `npm run build`. Ne déployer ni uniquement les fichiers HTML, ni un export statique : les routes API `/api/*` sont nécessaires.
+Le HTML appelle les API du même domaine. Il ne doit pas être ouvert comme un fichier local `file://` ni hébergé séparément sans configurer une URL d'API autorisée.
 
-Variables serveur à configurer dans Netlify :
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (clé publishable)
-- `SUPABASE_SERVICE_ROLE_KEY` (secret serveur uniquement)
-
-Ne jamais committer de fichier `.env.local` ni publier la clé `SUPABASE_SERVICE_ROLE_KEY`.
-
-## Avertissement avant production
-Les routes API de lecture, création et règlement des prédictions ne disposent pas encore d'authentification applicative. Ne pas ouvrir l'application au public ni utiliser des données sensibles avant d'avoir ajouté et testé un contrôle d'accès.
-
-Voir `NETLIFY-DEPLOYMENT.md` et `docs/` pour les limites et vérifications restantes.
+## ML facultatif
+`cd services/ml && pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8001`
